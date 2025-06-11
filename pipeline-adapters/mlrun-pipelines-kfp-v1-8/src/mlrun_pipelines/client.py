@@ -39,9 +39,7 @@ KF_PIPELINES_SA_TOKEN_ENV = "KF_PIPELINES_SA_TOKEN_PATH"
 KF_PIPELINES_SA_TOKEN_PATH = "/var/run/secrets/kubeflow/pipelines/token"
 ROOT_PARAMETER_NAME = "pipeline-root"
 
-INVALID_CHARACTERS_REGEX = re.compile(r"[^-0-9a-z]+")
-MULTIPLE_DASHES_REGEX = re.compile(r"-+")
-INPUT_NAME_REGEX = re.compile(r"[^_0-9a-z]+")
+INPUT_NAME_REGEX = re.compile(r"[^-0-9a-z]+")
 
 
 class ServiceAccountTokenVolumeCredentials:
@@ -102,7 +100,7 @@ class JobConfig:
 def sanitize_input_name(
     name: str,
 ) -> str:
-    return INPUT_NAME_REGEX.sub("_", name.lower()).strip("_")
+    return INPUT_NAME_REGEX.sub("-", name.lower()).strip("-")
 
 
 class Client(
