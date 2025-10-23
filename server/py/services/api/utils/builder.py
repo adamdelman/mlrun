@@ -19,6 +19,7 @@ import typing
 from base64 import b64decode, b64encode
 from collections import defaultdict
 from os import path
+from typing import Optional
 from urllib.parse import urlparse
 
 from kubernetes import client
@@ -551,6 +552,46 @@ def build_image(
         },
         project_default_fucntion_node_selector=project_default_function_node_selector,
     )
+
+    if source and parsed_url.scheme.lower() == "s3":
+        aws_access_key_id = builder_env.get("AWS_ACCESS_KEY_ID") or os.environ.get(
+            "AWS_ACCESS_KEY_ID"
+        )
+        aws_secret_access_key = builder_env.get("AWS_SECRET_ACCESS_KEY") or os.environ.get(
+            "AWS_SECRET_ACCESS_KEY"
+        )
+        aws_session_token = builder_env.get("AWS_SESSION_TOKEN") or os.environ.get(
+            "AWS_SESSION_TOKEN"
+        )
+        aws_region = builder_env.get("AWS_REGION") or os.environ.get("AWS_REGION")
+        aws_default_region = builder_env.get("AWS_DEFAULT_REGION") or os.environ.get(
+            "AWS_DEFAULT_REGION"
+        )
+        aws_endpoint_url_s3 = builder_env.get("AWS_ENDPOINT_URL_S3") or os.environ.get(
+            "AWS_ENDPOINT_URL_S3"
+        )
+
+        # If only one of region/default-region is set, mirror it to the other to avoid empty values
+        if not aws_region and aws_default_region:
+            aws_region = aws_default_region
+        if not aws_default_region and aws_region:
+            aws_default_region = aws_region
+
+        # Attach to the Kaniko pod env if present (ignore Nones)
+        aws_env_vars = {
+            "AWS_ACCESS_KEY_ID": aws_access_key_id,
+            "AWS_SECRET_ACCESS_KEY": aws_secret_access_key,
+            "AWS_SESSION_TOKEN": aws_session_token,
+            "AWS_REGION": aws_region,
+            "AWS_DEFAULT_REGION": aws_default_region,
+            "AWS_ENDPOINT_URL_S3": aws_endpoint_url_s3,
+        }
+        # KanikoPod supports extending env via .env dict; initialize if missing
+        if not hasattr(kpod, "env") or kpod.env is None:
+            kpod.env = {}
+        for env_var_name, env_var_value in aws_env_vars.items():
+            if env_var_value:
+                kpod.env[env_var_name] = env_var_value
 
     if to_mount:
         kpod.mount_v3io(
