@@ -19,7 +19,6 @@ import typing
 from base64 import b64decode, b64encode
 from collections import defaultdict
 from os import path
-from typing import Optional
 from urllib.parse import urlparse
 
 from kubernetes import client
@@ -557,9 +556,9 @@ def build_image(
         aws_access_key_id = builder_env.get("AWS_ACCESS_KEY_ID") or os.environ.get(
             "AWS_ACCESS_KEY_ID"
         )
-        aws_secret_access_key = builder_env.get("AWS_SECRET_ACCESS_KEY") or os.environ.get(
+        aws_secret_access_key = builder_env.get(
             "AWS_SECRET_ACCESS_KEY"
-        )
+        ) or os.environ.get("AWS_SECRET_ACCESS_KEY")
         aws_session_token = builder_env.get("AWS_SESSION_TOKEN") or os.environ.get(
             "AWS_SESSION_TOKEN"
         )
